@@ -9,15 +9,15 @@ import seaborn as sns
 # Load cleaned data
 @st.cache_data
 def load_data():
-    df = pd.read_csv('/Users/mac/Desktop/jide/cleaned_data.csv')
+    df = pd.read_csv('cleaned_data.csv')
     return df
 
 # Load KMeans model and scaler
 @st.cache_resource
 def load_model_scaler():
-    with open('/Users/mac/Desktop/jide/kmeans_model.pkl', 'rb') as f:
+    with open('kmeans_model.pkl', 'rb') as f:
         model = pickle.load(f)
-    with open('/Users/mac/Desktop/jide/scaler.pkl', 'rb') as f:
+    with open('jide/scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
     return model, scaler
 
