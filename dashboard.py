@@ -17,7 +17,7 @@ def load_data():
 def load_model_scaler():
     with open('kmeans_model.pkl', 'rb') as f:
         model = pickle.load(f)
-    with open('jide/scaler.pkl', 'rb') as f:
+    with open('scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
     return model, scaler
 
