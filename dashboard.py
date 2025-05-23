@@ -5,7 +5,7 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# -------------------
+
 # Load cleaned data
 @st.cache_data
 def load_data():
@@ -24,11 +24,11 @@ def load_model_scaler():
 df = load_data()
 model, scaler = load_model_scaler()
 
-# -------------------
+
 # Page title
 st.title("Crime Data Dashboard with Clustering")
 
-# -------------------
+
 # KPIs
 total_crimes = len(df)
 total_categories = df['Crime type'].nunique() if 'Crime type' in df.columns else 0
@@ -39,7 +39,7 @@ col1.metric("Total Crimes", total_crimes)
 col2.metric("Total Crime Types", total_categories)
 col3.metric("Total Crime Locations", total_locations)
 
-# -------------------
+
 # Date filter: Month
 months = sorted(df['Month'].unique())
 selected_month = st.sidebar.selectbox("Select Month", options=[None] + months)
@@ -52,7 +52,7 @@ else:
 
 st.write(f"Showing data for Month: {selected_month}")
 
-# -------------------
+
 # Visualizations
 
 # Aggregate crime counts per month
@@ -130,7 +130,7 @@ if 'Cluster' in df_filtered.columns:
 else:
     st.warning("Column 'Cluster' not found in data.")
 
-# -------------------
+
 # Cluster Prediction Form in Sidebar
 
 st.sidebar.header("Predict Crime Cluster")
