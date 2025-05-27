@@ -7,7 +7,7 @@ import seaborn as sns
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-import pmdarima as pm
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -282,42 +282,63 @@ else:
     plt.close(fig)
 
     # ——————————————————————————————
-    # 6️⃣ 10-Quarter SARIMA forecasts with 95% CI
-    st.subheader("10-Quarter Ahead Forecasts (SARIMA + 95 % CI)")
-    horizon = 10
-    fig, axes = plt.subplots(2, 2, figsize=(14, 8), sharex=True)
+    # 6️⃣ 10-Quarter SARIMAX forecasts with 95% CI
+st.subheader("10-Quarter Ahead Forecasts (SARIMAX + 95 % CI)")
+horizon = 10
+fig, axes = plt.subplots(2, 2, figsize=(14, 8), sharex=True)
 
-    for ax, col in zip(axes.flatten(), vars_):
-        ts = wb[col].dropna()
-        if len(ts) < 4:
-            ax.text(0.5, 0.5, "Insufficient data for SARIMA", ha='center', va='center')
-            ax.set_title(col)
-            continue
+for ax, col in zip(axes.flatten(), vars_):
+    ts = wb[col].dropna()
 
-        # Fit auto_arima seasonally
-        model = pm.auto_arima(
-            ts,
-            seasonal=True,
-            m=4,
-            stepwise=True,
-            suppress_warnings=True,
-            error_action='ignore'
+    # guardrail: need at least two seasonal cycles
+    if len(ts) < 8:
+        ax.text(
+            0.5, 0.5,
+            "Insufficient data for SARIMAX",
+            ha="center", va="center"
         )
-
-        # Forecast + CI
-        fc, ci = model.predict(n_periods=horizon, return_conf_int=True)
-        future_idx = pd.period_range(ts.index[-1], periods=horizon+1, freq='Q')[1:].to_timestamp()
-
-        # Plot
-        ax.plot(ts.index, ts, label='Historical', marker='o')
-        ax.plot(future_idx, fc, '--', label='Forecast')
-        ax.fill_between(future_idx, ci[:, 0], ci[:, 1], alpha=0.2, label='95% CI')
         ax.set_title(col)
         ax.set_xlabel("Quarter")
         ax.set_ylabel(col)
-        ax.legend()
-        ax.grid(alpha=0.25)
+        continue
 
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close(fig)
+    # 1️⃣ Fit SARIMAX(1,1,1)x(1,1,1,4)
+    model = SARIMAX(
+        ts,
+        order=(1, 1, 1),
+        seasonal_order=(1, 1, 1, 4),
+        enforce_stationarity=False,
+        enforce_invertibility=False
+    ).fit(disp=False)
+
+    # 2️⃣ Forecast & 95% CI
+    res = model.get_forecast(steps=horizon)
+    fc = res.predicted_mean
+    ci = res.conf_int(alpha=0.05)
+
+    future_idx = pd.period_range(
+        ts.index[-1],
+        periods=horizon + 1,
+        freq="Q"
+    )[1:].to_timestamp()
+
+    # 3️⃣ Plot
+    ax.plot(ts.index,    ts.values,   marker="o", label="Historical")
+    ax.plot(future_idx,  fc.values,   linestyle="--", label="Forecast")
+    ax.fill_between(
+        future_idx,
+        ci.iloc[:, 0],
+        ci.iloc[:, 1],
+        alpha=0.2,
+        label="95% CI"
+    )
+
+    ax.set_title(col)
+    ax.set_xlabel("Quarter")
+    ax.set_ylabel(col)
+    ax.legend()
+    ax.grid(alpha=0.3)
+
+plt.tight_layout()
+st.pyplot(fig)
+plt.close(fig)
