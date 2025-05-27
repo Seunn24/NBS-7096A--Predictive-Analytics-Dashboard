@@ -285,9 +285,7 @@ else:
             ax.set_xlabel("Quarter")
             ax.set_ylabel(col)
             continue
-
         d = diff_orders.get(col, 1)
-
         model = SARIMAX(
             ts,
             order=(1, d, 1),
@@ -295,7 +293,6 @@ else:
             enforce_stationarity=False,
             enforce_invertibility=False
         ).fit(disp=False)
-
         res = model.get_forecast(steps=horizon)
         fc = res.predicted_mean
         ci = res.conf_int(alpha=0.05)
